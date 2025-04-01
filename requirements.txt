@@ -1,0 +1,36 @@
+# Core libraries
+torch>=2.0.0 #2
+transformers>=4.30.0 #3
+datasets>=2.11.0
+accelerate>=0.20.0
+peft>=0.4.0
+bitsandbytes>=0.39.0
+opencv-python #4
+streamlit #5
+ultralytics #1
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Utilities
+tqdm>=4.65.0
+scikit-learn>=1.2.0
+
+
+# For inference
+gradio>=3.32.0
+
+# Memory optimization
+psutil>=5.9.0
+
+# Optional: monitoring
+tensorboard>=2.12.0
+wandb>=0.15.0
+
+# Saving and loading
+safetensors>=0.3.1
+huggingface_hub>=0.14.0
+
+streamlit
+google-generativeai #6
