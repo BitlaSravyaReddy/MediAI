@@ -42,7 +42,7 @@ Store your API key in a .env file or set it as an environment variable.
 
 streamlit run app.py
 
-Open your browser and go to http://localhost:8501 to start using MediAI.
+Open your browser and go to https://medi--ai.streamlit.app/ to start using MediAI.
 
 ## Models Used
 
