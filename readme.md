@@ -25,7 +25,7 @@ MediAI is an advanced AI-based medical diagnosis platform designed to help users
 
 Clone the repository:
 
-git clone https://github.com/yourusername/mediAI.git
+git clone https://github.com/BitlaSravyaReddy/MediAI.git
 cd mediAI
 
 Install dependencies: Make sure you have the required libraries by running:
