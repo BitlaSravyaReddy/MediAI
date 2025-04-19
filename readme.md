@@ -78,37 +78,3 @@ The AI chatbot, powered by Google Gemini, asks about your concerns and provides 
 4. Health Insights Generation:
 
 Input data such as food habits, sleep hours, and stress levels to receive personalized health advice.
-
-## Contributing
-If you'd like to contribute to the project, feel free to fork the repository and submit a pull request. Here are some ideas for contributions:
-
-Improving the model's accuracy for cavity and brain tumor detection.
-
-Enhancing the user interface of the platform.
-
-Adding more health analysis features.
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-YOLOv10 for real-time object detection.
-
-Google Gemini for chatbot AI integration.
-
-OpenCV for image processing and analysis.
-
-For any inquiries or issues, feel free to open an issue or contact the project maintainers.
-
-Note: This project is in its initial stages and ongoing improvements are being made. Stay tuned for updates!
-
-
-### Key Highlights:
-
-- **Comprehensive Feature Set:** Covers various aspects of health analysis, from real-time detections to diagnostic assistance via the chatbot.
-
-- **Integration with Google Gemini:** Adds a unique, intelligent, and conversational element to your platform.
-
-- **Image Analysis and Live Detection:** The use of models like YOLOv10 and deep learning for medical image analysis.
-
