@@ -1,4 +1,6 @@
 import streamlit as st
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import av
 import cv2
 import os
 import numpy as np
@@ -23,81 +25,146 @@ def process_live_detection(detection_type):
         elif detection_type == "Skin Condition Detection":
             model = load_yolo_model("skin.pt")
             detection_label = "Skin Condition"
-        
         else:
             st.error("Invalid detection type")
             return
-            
+
         if model is None:
             st.error(f"Failed to load {detection_type} model")
             return
-            
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            st.error("Failed to access webcam")
-            return
-            
-        st.frame = st.empty()
-        stop_button_placeholder = st.empty()
-        stop_button = stop_button_placeholder.button("Stop Live Detection", key="stop_live_detection")
-        
-        frame_skip = 0  # Process every other frame
-        running = True
-        
-        while cap.isOpened() and running:
-            ret, frame = cap.read()
-            if not ret:
-                st.error("Failed to capture video")
-                break
-                
-            # Skip frames for better performance
-            frame_skip += 1
-            if frame_skip % 2 != 0:
-                continue
-                
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            
-            # Resize for better performance
-            height, width = frame_rgb.shape[:2]
-            scale = 0.5
-            resized = cv2.resize(frame_rgb, (int(width*scale), int(height*scale)))
-            
-            results = model.predict(resized, conf=0.25)
-            
-            # Draw results on original frame
-            for r in results:
-                if hasattr(r, 'boxes'):
-                    for box in r.boxes:
-                        x1, y1, x2, y2 = map(int, (box.xyxy[0] / scale))  # Scale back to original size
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        conf = float(box.conf[0])
-                        
-                        # Display class name for skin or jaundice detection
-                        if detection_type in ["Skin Condition Detection", "Jaundice Detection"] and hasattr(model, 'names'):
-                            cls = int(box.cls[0])
-                            class_name = model.names[cls] if cls in model.names else f"Class {cls}"
-                            label = f"{class_name}: {conf:.2f}"
-                        else:
-                            label = f"{detection_label}: {conf:.2f}"
-                            
-                        cv2.putText(frame, label, (x1, y1-10), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            
-            st.frame.image(frame, channels="BGR", use_container_width=True)
-            
-            # Check if stop button is pressed
-            if stop_button:
-                running = False
-                break
-                
-            time.sleep(0.03)  # Small delay to prevent UI freezing
-            
-        cap.release()
-        cv2.destroyAllWindows()
-        
+
+        # Define custom video processor
+        class VideoProcessor(VideoProcessorBase):
+            def __init__(self):
+                self.frame_skip = 0
+
+            def recv(self, frame):
+                img = frame.to_ndarray(format="bgr24")
+                self.frame_skip += 1
+                if self.frame_skip % 2 != 0:
+                    return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+                frame_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                height, width = frame_rgb.shape[:2]
+                scale = 0.5
+                resized = cv2.resize(frame_rgb, (int(width * scale), int(height * scale)))
+
+                results = model.predict(resized, conf=0.25)
+
+                for r in results:
+                    if hasattr(r, 'boxes'):
+                        for box in r.boxes:
+                            x1, y1, x2, y2 = map(int, (box.xyxy[0] / scale))
+                            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                            conf = float(box.conf[0])
+                            if detection_type in ["Skin Condition Detection", "Jaundice Detection"] and hasattr(model, 'names'):
+                                cls = int(box.cls[0])
+                                class_name = model.names[cls] if cls in model.names else f"Class {cls}"
+                                label = f"{class_name}: {conf:.2f}"
+                            else:
+                                label = f"{detection_label}: {conf:.2f}"
+
+                            cv2.putText(img, label, (x1, y1 - 10),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+                return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+        st.info("Initializing webcam...")
+
+        webrtc_streamer(
+            key=f"live_detection_{detection_type}",
+            video_processor_factory=VideoProcessor,
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True,
+        )
+
     except Exception as e:
         st.error(f"Live detection error: {str(e)}")
         traceback.print_exc()
+
+# def process_live_detection(detection_type):
+#     try:
+#         if detection_type == "Face Stress Analysis":
+#             model = load_yolo_model("facedetection.pt")
+#             detection_label = "Face"
+#         elif detection_type == "Skin Condition Detection":
+#             model = load_yolo_model("skin.pt")
+#             detection_label = "Skin Condition"
+        
+#         else:
+#             st.error("Invalid detection type")
+#             return
+            
+#         if model is None:
+#             st.error(f"Failed to load {detection_type} model")
+#             return
+            
+#         cap = cv2.VideoCapture(0)
+#         if not cap.isOpened():
+#             st.error("Failed to access webcam")
+#             return
+            
+#         st.frame = st.empty()
+#         stop_button_placeholder = st.empty()
+#         stop_button = stop_button_placeholder.button("Stop Live Detection", key="stop_live_detection")
+        
+#         frame_skip = 0  # Process every other frame
+#         running = True
+        
+#         while cap.isOpened() and running:
+#             ret, frame = cap.read()
+#             if not ret:
+#                 st.error("Failed to capture video")
+#                 break
+                
+#             # Skip frames for better performance
+#             frame_skip += 1
+#             if frame_skip % 2 != 0:
+#                 continue
+                
+#             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+#             # Resize for better performance
+#             height, width = frame_rgb.shape[:2]
+#             scale = 0.5
+#             resized = cv2.resize(frame_rgb, (int(width*scale), int(height*scale)))
+            
+#             results = model.predict(resized, conf=0.25)
+            
+#             # Draw results on original frame
+#             for r in results:
+#                 if hasattr(r, 'boxes'):
+#                     for box in r.boxes:
+#                         x1, y1, x2, y2 = map(int, (box.xyxy[0] / scale))  # Scale back to original size
+#                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+#                         conf = float(box.conf[0])
+                        
+#                         # Display class name for skin or jaundice detection
+#                         if detection_type in ["Skin Condition Detection", "Jaundice Detection"] and hasattr(model, 'names'):
+#                             cls = int(box.cls[0])
+#                             class_name = model.names[cls] if cls in model.names else f"Class {cls}"
+#                             label = f"{class_name}: {conf:.2f}"
+#                         else:
+#                             label = f"{detection_label}: {conf:.2f}"
+                            
+#                         cv2.putText(frame, label, (x1, y1-10), 
+#                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+#             st.frame.image(frame, channels="BGR", use_container_width=True)
+            
+#             # Check if stop button is pressed
+#             if stop_button:
+#                 running = False
+#                 break
+                
+#             time.sleep(0.03)  # Small delay to prevent UI freezing
+            
+#         cap.release()
+#         cv2.destroyAllWindows()
+        
+#     except Exception as e:
+#         st.error(f"Live detection error: {str(e)}")
+#         traceback.print_exc()
 def main_app():
     st.markdown(
         """
